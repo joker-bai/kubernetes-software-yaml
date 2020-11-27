@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: claim-postgres
+  namespace: devops
+spec:
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: nfs-client-storageclass
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sonar-data
+  namespace: devops
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: nfs-client-storageclass
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sonar-extensions
+  namespace: devops
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: nfs-client-storageclass 
+  resources:
+    requests:
+      storage: 1Gi

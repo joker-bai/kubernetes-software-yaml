@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sonar-postgres
+  namespace: devops
+spec:
+  selector:
+    matchLabels:
+      name: sonar-postgres
+  replicas: 1
+  template:
+    metadata:
+      name: sonar-postgres
+      labels:
+        name: sonar-postgres
+    spec:
+      containers:
+        - image: postgres:latest
+          name: sonar-postgres
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-pwd
+                  key: password
+            - name: POSTGRES_USER
+              value: sonar
+            - name: POSTGRES_DB
+              value: sonar
+          ports:
+            - containerPort: 5432
+              name: postgresport
+          volumeMounts:
+            # This name must match the volumes.name below.
+            - name: data-disk
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: data-disk
+          persistentVolumeClaim:
+            claimName: claim-postgres
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: sonar-postgres
+  name: sonar-postgres
+  namespace: devops
+spec:
+  ports:
+    - port: 5432
+  selector:
+    name: sonar-postgres

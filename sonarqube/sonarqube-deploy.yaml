@@ -1,0 +1,90 @@
+apiVersion: apps/v1 
+kind: Deployment
+metadata:
+  name: sonarqube
+  namespace: devops
+spec:
+  selector:
+    matchLabels:
+      name: sonarqube
+  replicas: 1
+  template:
+    metadata:
+      name: sonarqube
+      labels:
+        name: sonarqube
+    spec:
+      initContainers:               #设置初始化镜像，执行 system 命令
+      - name: init-sysctl
+        image: busybox
+        imagePullPolicy: IfNotPresent
+        command: ["sysctl", "-w", "vm.max_map_count=262144"]  #必须设置vm.max_map_count这个值调整内存权限，否则启动可能报错
+        securityContext:
+          privileged: true          #赋予权限能执行系统命令
+      containers:
+        - image: sonarqube:latest
+          lifecycle:
+            postStart:
+              exec:
+                command:
+                - touch
+                - /opt/sonarqube/logs/es.log
+          args:
+            - -Dsonar.web.context=/
+          name: sonarqube
+          env:
+            - name: SONARQUBE_JDBC_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-pwd
+                  key: password
+            - name: SONARQUBE_JDBC_URL
+              value: jdbc:postgresql://sonar-postgres:5432/sonar
+            - name: SONARQUBE_JDBC_USERNAME
+              value: sonar
+          ports:
+            - containerPort: 9000
+              name: sonarqube
+          volumeMounts:
+          - mountPath: "/opt/sonarqube/data/"
+            name: sonar-data
+          - mountPath: "/opt/sonarqube/extensions/"
+            name: sonar-extensions
+      volumes:
+      - name: sonar-data
+        persistentVolumeClaim:
+          claimName: sonar-data
+      - name: sonar-extensions
+        persistentVolumeClaim:
+          claimName: sonar-extensions
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: sonar
+  name: sonar
+  namespace: devops
+spec:
+  type: NodePort
+  ports:
+    - port: 9000
+      targetPort: 9000
+      name: sonarport
+  selector:
+    name: sonarqube
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: sonarqube
+  namespace: devops
+spec:
+  entryPoints:
+  - web
+  routes:
+  - match: Host(`sonarqube-test.coolops.cn`)
+    kind: Rule
+    services:
+    - name: sonar
+      port: 9000

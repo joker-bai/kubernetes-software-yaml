@@ -1,0 +1,99 @@
+---
+apiVersion: apps/v1 
+kind: Deployment
+metadata:
+  name: jenkins
+  namespace: devops 
+spec:
+  selector:
+    matchLabels:
+      app: jenkins
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: jenkins
+    spec:
+      terminationGracePeriodSeconds: 10
+      serviceAccount: jenkins-sa
+      containers:
+      - name: jenkins
+        image: registry.cn-hangzhou.aliyuncs.com/rookieops/jenkins:2.18.2 
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: JAVA_OPTS
+          value: -XshowSettings:vm -Dhudson.slaves.NodeProvisioner.initialDelay=0 -Dhudson.slaves.NodeProvisioner.MARGIN=50 -Dhudson.slaves.NodeProvisioner.MARGIN0=0.85 -Duser.timezone=Asia/Shanghai
+        ports:
+        - containerPort: 8080
+          name: web
+          protocol: TCP
+        - containerPort: 50000
+          name: agent
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+          requests:
+            cpu: 500m
+            memory: 512Mi
+        livenessProbe:
+          httpGet:
+            path: /login
+            port: 8080
+          initialDelaySeconds: 130
+          timeoutSeconds: 5
+          failureThreshold: 12
+        readinessProbe:
+          httpGet:
+            path: /login
+            port: 8080
+          initialDelaySeconds: 120
+          timeoutSeconds: 5
+          failureThreshold: 12
+        volumeMounts:
+        - name: jenkinshome
+          mountPath: /var/jenkins_home
+      securityContext:
+        fsGroup: 1000
+      volumes:
+      - name: jenkinshome
+        persistentVolumeClaim:
+          claimName: jenkins-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jenkins
+  namespace: devops 
+  labels:
+    app: jenkins
+spec:
+  selector:
+    app: jenkins
+  type: NodePort
+  ports:
+  - name: web
+    port: 8080
+    targetPort: web
+    nodePort: 30002
+  - name: agent
+    port: 50000
+    targetPort: agent
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: jenkins
+  namespace: devops
+spec:
+  entryPoints:
+  - web
+  routes:
+  - match: Host(`jenkins-test.coolops.cn`)
+    kind: Rule
+    services:
+    - name: jenkins
+      port: 8080 

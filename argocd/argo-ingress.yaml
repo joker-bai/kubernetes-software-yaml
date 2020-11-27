@@ -1,0 +1,40 @@
+#apiVersion: traefik.containo.us/v1alpha1
+#kind: IngressRoute
+#metadata:
+#  name: argocd-server
+#  namespace: devops
+#spec:
+#  entryPoints:
+#  - web
+#  routes:
+#  - match: Host(`argo-test.coolops.cn`)
+#    kind: Rule
+#    services:
+#    - name: argocd-server
+#      port: 80
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: argocd-server
+  namespace: devops 
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`argo-test.coolops.cn`)
+      priority: 10
+      services:
+        - name: argocd-server
+          port: 80
+    - kind: Rule
+      match: Host(`argo-test.coolops.cn`) && Headers(`Content-Type`, `application/grpc`)
+      priority: 11
+      services:
+        - name: argocd-server
+          port: 80
+          scheme: h2c
+  tls:
+    certResolver: default
+    options: {}
