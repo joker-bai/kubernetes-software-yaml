@@ -7,7 +7,7 @@
 #  entryPoints:
 #  - web
 #  routes:
-#  - match: Host(`argo-test.coolops.cn`)
+#  - match: Host(`argo-test.xxxx.cn`)
 #    kind: Rule
 #    services:
 #    - name: argocd-server
@@ -23,13 +23,13 @@ spec:
     - websecure
   routes:
     - kind: Rule
-      match: Host(`argo-test.coolops.cn`)
+      match: Host(`argo-test.xxxx.cn`)
       priority: 10
       services:
         - name: argocd-server
           port: 80
     - kind: Rule
-      match: Host(`argo-test.coolops.cn`) && Headers(`Content-Type`, `application/grpc`)
+      match: Host(`argo-test.xxxx.cn`) && Headers(`Content-Type`, `application/grpc`)
       priority: 11
       services:
         - name: argocd-server

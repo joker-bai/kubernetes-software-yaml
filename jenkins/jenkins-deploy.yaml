@@ -92,7 +92,7 @@ spec:
   entryPoints:
   - web
   routes:
-  - match: Host(`jenkins-test.coolops.cn`)
+  - match: Host(`jenkins-test.xxxx.cn`)
     kind: Rule
     services:
     - name: jenkins

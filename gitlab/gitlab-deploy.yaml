@@ -120,7 +120,7 @@ spec:
   entryPoints:
   - web
   routes:
-  - match: Host(`gitlab-test.coolops.cn`)
+  - match: Host(`gitlab-test.xxxx.cn`)
     kind: Rule
     services:
     - name: gitlab 

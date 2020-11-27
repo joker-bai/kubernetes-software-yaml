@@ -83,7 +83,7 @@ spec:
   entryPoints:
   - web
   routes:
-  - match: Host(`sonarqube-test.coolops.cn`)
+  - match: Host(`sonarqube-test.xxxx.cn`)
     kind: Rule
     services:
     - name: sonar
